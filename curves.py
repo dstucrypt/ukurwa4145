@@ -52,7 +52,7 @@ class Field(object):
     @classmethod
     def mul(self, val_a, val_b):
         val_c = 0
-        for j in range(bitl(val_a)):
+        for j in xrange(bitl(val_a)):
             if val_a & (1<<j):
                 val_c = val_c ^ val_b
             val_b = val_b << 1
@@ -139,6 +139,8 @@ class Point(object):
 
         return point_2
 
+    __add__ = add
+
     def negate(self):
         ret = Point(0, 0)
         ret.x.v = self.x.v
@@ -156,12 +158,14 @@ class Point(object):
             point = self
 
         point_s = Point(0, 0)
-        for j in range(bitl(param_n) - 1, -1, -1):
-            point_s = point_s.add(point_s)
+        for j in xrange(bitl(param_n) - 1, -1, -1):
+            point_s = point_s + point_s
             if param_n & (1<<j):
-                point_s = point_s.add(point)
+                point_s = point_s + point
 
         return point_s
+
+    __mul__ = mul
 
     def is_zero(self):
         return (self.x.v == 0) and (self.y.v == 0)
@@ -210,13 +214,13 @@ def compute():
     r = 0x61862343DBE63F38EA5041F60E33DFF508164DD691F4E4EBCB1B69B2A1D07C4E
     s = 0x0F131F2A6961079F956A85CED6B34DE0AC22E594532ACBDB0BF8CF170EAAFB91
 
-    mulQ = pointQ.mul(r)
+    mulQ = pointQ * r
     print mulQ
 
     assert mulQ.x.v == 0x7686afc24faac788d7983666f0c67689cdb31a21b72ccc904ffb526e510f0efe
     assert mulQ.y.v == 0x165a812d76a4c438e691bfdc4a1c39fc77104bf41caf041fec8627884e8efa8cc
 
-    mulS = domain.base.mul(s)
+    mulS = domain.base * s
     print mulS
 
     assert mulS.x.v == 0xd9bf820f8d7d4b664efb1dfe20f6b602fa58b933425f23f4ec3f616943556f91
