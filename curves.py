@@ -16,8 +16,10 @@ bitl = long.bit_length
 @contextmanager
 def curve():
     ldata.curve_domain = dstu257()
+    ldata.curve = ldata.curve_domain.curve
     yield
     del ldata.curve_domain
+    del ldata.curve
 
 
 class Pubkey(object):
@@ -95,8 +97,8 @@ class Point(object):
         self.x = Field(x)
         self.y = Field(y)
 
-    def add(self, point_1, curve):
-        a = curve.field_a
+    def add(self, point_1):
+        a = ldata.curve.field_a
 
         x0, y0 = self.x.v, self.y.v
         x1, y1 = point_1.x.v, point_1.y.v
@@ -143,7 +145,7 @@ class Point(object):
         ret.y.v = self.y.v + self.x.v
         return ret
 
-    def mul(self, param_n, curve):
+    def mul(self, param_n):
         if param_n == 0:
             raise Point(0, 0)
 
@@ -155,9 +157,9 @@ class Point(object):
 
         point_s = Point(0, 0)
         for j in range(bitl(param_n) - 1, -1, -1):
-            point_s = point_s.add(point_s, curve=curve)
+            point_s = point_s.add(point_s)
             if param_n & (1<<j):
-                point_s = point_s.add(point, curve=curve)
+                point_s = point_s.add(point)
 
         return point_s
 
@@ -198,7 +200,6 @@ def dstu257():
 
 
 def compute():
-    curve = ldata.curve_domain.curve
     domain = ldata.curve_domain
 
     pointQ = Point(0x00AFF3EE09CB429284985849E20DE5742E194AA631490F62BA88702505629A6589, 
@@ -209,13 +210,13 @@ def compute():
     r = 0x61862343DBE63F38EA5041F60E33DFF508164DD691F4E4EBCB1B69B2A1D07C4E
     s = 0x0F131F2A6961079F956A85CED6B34DE0AC22E594532ACBDB0BF8CF170EAAFB91
 
-    mulQ = pointQ.mul(r, curve)
+    mulQ = pointQ.mul(r)
     print mulQ
 
     assert mulQ.x.v == 0x7686afc24faac788d7983666f0c67689cdb31a21b72ccc904ffb526e510f0efe
     assert mulQ.y.v == 0x165a812d76a4c438e691bfdc4a1c39fc77104bf41caf041fec8627884e8efa8cc
 
-    mulS = domain.base.mul(s, curve)
+    mulS = domain.base.mul(s)
     print mulS
 
     assert mulS.x.v == 0xd9bf820f8d7d4b664efb1dfe20f6b602fa58b933425f23f4ec3f616943556f91
