@@ -126,18 +126,27 @@ class Point(object):
 
         return point_2
 
+    def negate(self):
+        ret = Point(0, 0)
+        ret.x.v = self.x.v
+        ret.y.v = self.y.v + self.x.v
+        return ret
+
     def mul(self, param_n, curve):
         if param_n == 0:
-            raise ValueError("create point with no params")
+            raise Point(0, 0)
 
         if param_n < 0:
-            raise ValueError("dunno")
+            param_n = -param_n
+            point = self.negate()
+        else:
+            point = self
 
         point_s = Point(0, 0)
         for j in range(bitl(param_n) - 1, -1, -1):
             point_s = point_s.add(point_s, curve=curve)
             if param_n & (1<<j):
-                point_s = point_s.add(self, curve=curve)
+                point_s = point_s.add(point, curve=curve)
 
         return point_s
 
