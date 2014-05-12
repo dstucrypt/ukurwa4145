@@ -5,8 +5,7 @@
 #
 # Ilya Petrov, 2014
 
-def bitl(val):
-    return val.bit_length()
+ldata = threading.local()
 
 
 class Pubkey(object):
