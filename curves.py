@@ -5,7 +5,19 @@
 #
 # Ilya Petrov, 2014
 
+from contextlib import contextmanager
+import threading
+
 ldata = threading.local()
+
+bitl = long.bit_length
+
+
+@contextmanager
+def curve():
+    ldata.curve_domain = dstu257()
+    yield
+    del ldata.curve_domain
 
 
 class Pubkey(object):
@@ -185,9 +197,9 @@ def dstu257():
     return Domain(257, 12, Curve(PARAM_A, PARAM_B), ORDER, base_point)
 
 
-def main():
-    domain = dstu257()
-    curve = domain.curve
+def compute():
+    curve = ldata.curve_domain.curve
+    domain = ldata.curve_domain
 
     pointQ = Point(0x00AFF3EE09CB429284985849E20DE5742E194AA631490F62BA88702505629A6589, 
                   0x01B345BC134F27DA251EDFAE97B3F306B4E8B8CB9CF86D8651E4FB301EF8E1239C)
@@ -209,6 +221,9 @@ def main():
     assert mulS.x.v == 0xd9bf820f8d7d4b664efb1dfe20f6b602fa58b933425f23f4ec3f616943556f91
     assert mulS.y.v == 0x17a6a7d179782ac23e1b89083114f45d666db08bcde1691432ed4c446e0291c54
 
+def main():
+    with curve():
+        compute()
 
 if __name__ == '__main__':
     main()
