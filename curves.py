@@ -84,32 +84,19 @@ class Point(object):
         self.x = Field(x)
         self.y = Field(y)
 
-    def is_zero(self):
-        return (self.x.v == 0) and (self.y.v == 0)
+    def add(self, point_1, curve):
+        a = curve.field_a
 
-    def __repr__(self):
-        return '<Point X:{:x} Y:{:x}>'.format(self.x.v, self.y.v)
-
-
-class Curve(object):
-    def __init__(self, field_a, field_b):
-        self.field_a = field_a
-        self.field_b = field_b
-
-    def add(self, point_0, point_1):
-        a = self.field_a
-        b = self.field_b
-
-        x0, y0 = point_0.x.v, point_0.y.v
+        x0, y0 = self.x.v, self.y.v
         x1, y1 = point_1.x.v, point_1.y.v
 
         point_2 = Point(0, 0)
 
-        if point_0.is_zero():
+        if self.is_zero():
             return point_1
 
         if point_1.is_zero():
-            return point_0
+            return self
 
         if x0 != x1:
             lbd = Field.mul(
@@ -139,7 +126,7 @@ class Curve(object):
 
         return point_2
 
-    def mul(self, param_n, point):
+    def mul(self, param_n, curve):
         if param_n == 0:
             raise ValueError("create point with no params")
 
@@ -148,21 +135,32 @@ class Curve(object):
 
         point_s = Point(0, 0)
         for j in range(bitl(param_n) - 1, -1, -1):
-            point_s = self.add(point_s, point_s)
+            point_s = point_s.add(point_s, curve=curve)
             if param_n & (1<<j):
-                point_s = self.add(point_s, point)
+                point_s = point_s.add(self, curve=curve)
 
         return point_s
 
+    def is_zero(self):
+        return (self.x.v == 0) and (self.y.v == 0)
+
+    def __repr__(self):
+        return '<Point X:{:x} Y:{:x}>'.format(self.x.v, self.y.v)
+
+
+class Curve(object):
+    def __init__(self, field_a, field_b):
+        self.field_a = field_a
+        self.field_b = field_b
+
 
 class Domain(object):
-    def __init__(self, param_m, nom_k, curve, order, base, cofactor):
+    def __init__(self, param_m, nom_k, curve, order, base):
         self.param_m = param_m
         self.nom_k = nom_k
         self.curve = curve
         self.order = order
         self.base = base
-        self.cofactor = cofactor
 
 
 def dstu257():
@@ -191,12 +189,18 @@ def main():
     r = 0x61862343DBE63F38EA5041F60E33DFF508164DD691F4E4EBCB1B69B2A1D07C4E
     s = 0x0F131F2A6961079F956A85CED6B34DE0AC22E594532ACBDB0BF8CF170EAAFB91
 
-    mulQ = curve.mul(r, pointQ)
+    mulQ = pointQ.mul(r, curve)
     print mulQ
 
-    mulS = curve.mul(s, domain.base)
+    assert mulQ.x.v == 0x7686afc24faac788d7983666f0c67689cdb31a21b72ccc904ffb526e510f0efe
+    assert mulQ.y.v == 0x165a812d76a4c438e691bfdc4a1c39fc77104bf41caf041fec8627884e8efa8cc
 
+    mulS = domain.base.mul(s, curve)
     print mulS
+
+    assert mulS.x.v == 0xd9bf820f8d7d4b664efb1dfe20f6b602fa58b933425f23f4ec3f616943556f91
+    assert mulS.y.v == 0x17a6a7d179782ac23e1b89083114f45d666db08bcde1691432ed4c446e0291c54
+
 
 if __name__ == '__main__':
     main()
