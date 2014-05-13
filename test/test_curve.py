@@ -1,5 +1,5 @@
 import re
-from ukurwa4145 import curve, Point, Field
+from ukurwa4145 import curve, Point, Field, Priv, Pubkey
 
 PUB_KEY = """
     04:00:af:f3:ee:09:cb:42:92:84:98:58:49:e2:0d:
@@ -13,6 +13,35 @@ PUB_X = 0x00AFF3EE09CB429284985849E20DE5742E194AA631490F62BA88702505629A6589
 PUB_Y = 0x01B345BC134F27DA251EDFAE97B3F306B4E8B8CB9CF86D8651E4FB301EF8E1239C
 
 
+def test_sign():
+    PRIV = 0x2A45EAFE4CD469F811737780C57253360FBCC58E134C9A1FDCD10B0E4529A143
+    HASH = 0x6845214B63288A832A772E1FE6CB6C7D3528569E29A8B3584370FDC65F474242
+    RAND_E = 0x7A32849E569C8888F25DE6F69A839D75057383F473ACF559ABD3C5D683294CEB
+
+    SIG = (0x0CCC6816453A903A1B641DF999011177DF420D21A72236D798532AEF42E224AB,
+        0x491FA1EF75EAEF75E1F20CF3918993AB37E06005EA8E204BC009A1FA61BB0FB2)
+
+    with curve('DSTU_257') as domain:
+        priv = Priv(PRIV)
+        s, r = priv._help_sign(HASH, rand_e=RAND_E, domain=domain)
+        assert SIG == (s, r)
+
+        pubQ = Point(PUB_X, PUB_Y)
+        pub = Pubkey(pubQ)
+        ok = pub._help_check(HASH, s, r, domain=domain)
+        assert ok
+
+
+def test_priv_pub():
+    with curve('DSTU_257') as domain:
+        PRIV = 0x2A45EAFE4CD469F811737780C57253360FBCC58E134C9A1FDCD10B0E4529A143
+
+        priv = Priv(PRIV)
+        pub = domain.base * priv.param_d
+        assert pub.x.v == PUB_X
+        assert pub.y.v == PUB_Y
+
+
 def test_pub_key():
     pub_key = re.sub(r"[ \n:]", '', PUB_KEY)
 
@@ -23,7 +52,7 @@ def test_pub_key():
         assert point == pointQ
 
 
-def test_compute():
+def test_verify():
     with curve('DSTU_257') as domain:
         help_compute(domain)
 
@@ -32,27 +61,12 @@ def help_compute(domain):
     pointQ = Point(0x00AFF3EE09CB429284985849E20DE5742E194AA631490F62BA88702505629A6589, 
                   0x01B345BC134F27DA251EDFAE97B3F306B4E8B8CB9CF86D8651E4FB301EF8E1239C)
 
-    print pointQ
+    pub = Pubkey(pointQ)
 
     r = 0x61862343DBE63F38EA5041F60E33DFF508164DD691F4E4EBCB1B69B2A1D07C4E
     s = 0x0F131F2A6961079F956A85CED6B34DE0AC22E594532ACBDB0BF8CF170EAAFB91
+    hash_val =  0x71C910BAC9C494E0F2A6DBDD369C542AAF95E0CF842155C2F76595117EB0F26D
 
-    mulQ = pointQ * r
-    print mulQ
 
-    assert mulQ.x.v == 0x7686afc24faac788d7983666f0c67689cdb31a21b72ccc904ffb526e510f0efe
-    assert mulQ.y.v == 0x165a812d76a4c438e691bfdc4a1c39fc77104bf41caf041fec8627884e8efa8cc
-
-    mulS = domain.base * s
-    print mulS
-
-    assert mulS.x.v == 0xd9bf820f8d7d4b664efb1dfe20f6b602fa58b933425f23f4ec3f616943556f91
-    assert mulS.y.v == 0x17a6a7d179782ac23e1b89083114f45d666db08bcde1691432ed4c446e0291c54
-
-    pointR = mulS + mulQ
-
-    print pointR
-
-    r1 = Field.mul(0x71C910BAC9C494E0F2A6DBDD369C542AAF95E0CF842155C2F76595117EB0F26D, pointR.x.v)
-    print hex(Field.truncate(r1))
-
+    ok = pub._help_check(hash_val, s, r, domain=domain)
+    assert ok
