@@ -1,7 +1,7 @@
 from ukurwa4145 import curve, Point, Field
 
 def test_compute():
-    with curve() as domain:
+    with curve('DSTU_257') as domain:
         help_compute(domain)
 
 def help_compute(domain):
