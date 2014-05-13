@@ -18,7 +18,7 @@ def curve():
     ldata.curve_domain = dstu257()
     ldata.curve = ldata.curve_domain.curve
     ldata.modulus = ldata.curve_domain.modulus
-    yield
+    yield ldata.curve_domain
     del ldata.curve_domain
     del ldata.curve
     del ldata.modulus
@@ -51,6 +51,17 @@ class Field(object):
             rv = rv ^ mask
 
         return rv
+
+    @classmethod
+    def truncate(cls, val):
+        domain = ldata.curve_domain
+        bitl_o = bitl(domain.order)
+        xbit = bitl(val)
+        while bitl_o <= xbit:
+            val = val ^ (1<<(xbit - 1))
+            xbit = bitl(val)
+
+        return val
 
     @classmethod
     def mul(self, val_a, val_b):
@@ -193,6 +204,9 @@ class Domain(object):
         self._base = base
         self.modulus = Field.comp_modulus(param_m, *self.nom_k)
 
+    def __exit__(self, exc_type, exc_value, tracebac):
+        pass
+
 
 class DSTU_257(Domain):
     BASE_X = 0x002A29EF207D0E9B6C55CD260B306C7E007AC491CA1B10C62334A9E8DCD8D20FB7
@@ -216,36 +230,8 @@ def dstu257():
     PARAM_A = 0
     PARAM_B = 0x01CEF494720115657E18F938D7A7942394FF9425C1458C57861F9EEA6ADBE3BE10
     ORDER = 0x800000000000000000000000000000006759213AF182E987D3E17714907D470D
-
+    
     return DSTU_257(257, [12, 0], Curve(PARAM_A, PARAM_B), ORDER)
 
-
-def compute():
-    domain = ldata.curve_domain
-
-    pointQ = Point(0x00AFF3EE09CB429284985849E20DE5742E194AA631490F62BA88702505629A6589, 
-                  0x01B345BC134F27DA251EDFAE97B3F306B4E8B8CB9CF86D8651E4FB301EF8E1239C)
-
-    print pointQ
-
-    r = 0x61862343DBE63F38EA5041F60E33DFF508164DD691F4E4EBCB1B69B2A1D07C4E
-    s = 0x0F131F2A6961079F956A85CED6B34DE0AC22E594532ACBDB0BF8CF170EAAFB91
-
-    mulQ = pointQ * r
-    print mulQ
-
-    assert mulQ.x.v == 0x7686afc24faac788d7983666f0c67689cdb31a21b72ccc904ffb526e510f0efe
-    assert mulQ.y.v == 0x165a812d76a4c438e691bfdc4a1c39fc77104bf41caf041fec8627884e8efa8cc
-
-    mulS = domain.base * s
-    print mulS
-
-    assert mulS.x.v == 0xd9bf820f8d7d4b664efb1dfe20f6b602fa58b933425f23f4ec3f616943556f91
-    assert mulS.y.v == 0x17a6a7d179782ac23e1b89083114f45d666db08bcde1691432ed4c446e0291c54
-
-def main():
-    with curve():
-        compute()
-
-if __name__ == '__main__':
-    main()
+def verify(e, s, r, pub):
+    pass
