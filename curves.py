@@ -17,9 +17,11 @@ bitl = long.bit_length
 def curve():
     ldata.curve_domain = dstu257()
     ldata.curve = ldata.curve_domain.curve
+    ldata.modulus = ldata.curve_domain.modulus
     yield
     del ldata.curve_domain
     del ldata.curve
+    del ldata.modulus
 
 
 class Pubkey(object):
@@ -34,17 +36,18 @@ class Field(object):
 
     @classmethod
     def mod(self, val):
+        modulus = ldata.modulus
 
-        if self.modulus == 0:
+        if modulus == 0:
             raise TypeError("Field class not configured")
 
-        if val <= self.modulus:
+        if val <= modulus:
             return val
 
         rv = val
-        bitm_l = bitl(self.modulus)
+        bitm_l = bitl(modulus)
         while bitl(rv) >= bitm_l:
-            mask = self.modulus << (bitl(rv) - bitm_l)
+            mask = modulus << (bitl(rv) - bitm_l)
             rv = rv ^ mask
 
         return rv
@@ -65,10 +68,11 @@ class Field(object):
 
     @classmethod
     def inv(cls, val_a):
+        modulus = ldata.modulus
         b = 1
         c = 0
         u = cls.mod(val_a)
-        v = cls.modulus
+        v = modulus
 
         while bitl(u) > 1:
             j = bitl(u) - bitl(v)
@@ -83,13 +87,13 @@ class Field(object):
         return b
 
     @classmethod
-    def set_modulus(cls, k3, k2, k1):
+    def comp_modulus(cls, k3, k2, k1):
         modulus = 0
         modulus |= 1<<k3
         modulus |= 1<<k2
         modulus |= 1<<k1
 
-        cls.modulus = modulus
+        return modulus
 
 
 class Point(object):
@@ -181,26 +185,39 @@ class Curve(object):
 
 
 class Domain(object):
-    def __init__(self, param_m, nom_k, curve, order, base):
+    def __init__(self, param_m, nom_k, curve, order, base=None):
         self.param_m = param_m
         self.nom_k = nom_k
         self.curve = curve
         self.order = order
-        self.base = base
+        self._base = base
+        self.modulus = Field.comp_modulus(param_m, *self.nom_k)
+
+
+class DSTU_257(Domain):
+    BASE_X = 0x002A29EF207D0E9B6C55CD260B306C7E007AC491CA1B10C62334A9E8DCD8D20FB7
+    BASE_Y = 0x010686D41FF744D4449FCCF6D8EEA03102E6812C93A9D60B978B702CF156D814EF
+
+    @property
+    def base(self):
+        try:
+            base = self._base
+            if base is None:
+                raise AttributeError()
+        except AttributeError:
+            base = Point(self.BASE_X, self.BASE_Y)
+            self._base = base
+
+        return base
 
 
 def dstu257():
 
-    Field.set_modulus(257, 12, 0)
-
     PARAM_A = 0
     PARAM_B = 0x01CEF494720115657E18F938D7A7942394FF9425C1458C57861F9EEA6ADBE3BE10
     ORDER = 0x800000000000000000000000000000006759213AF182E987D3E17714907D470D
-    BASE_X = 0x002A29EF207D0E9B6C55CD260B306C7E007AC491CA1B10C62334A9E8DCD8D20FB7
-    BASE_Y = 0x010686D41FF744D4449FCCF6D8EEA03102E6812C93A9D60B978B702CF156D814EF
-    base_point = Point(BASE_X, BASE_Y)
 
-    return Domain(257, 12, Curve(PARAM_A, PARAM_B), ORDER, base_point)
+    return DSTU_257(257, [12, 0], Curve(PARAM_A, PARAM_B), ORDER)
 
 
 def compute():
