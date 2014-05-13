@@ -80,11 +80,33 @@ class Field(object):
 
         return modulus
 
+    def __eq__(self, other):
+        return long.__cmp__(self.v,  other.v) == 0
+
 
 class Point(object):
+    FORMAT_UNCOMPRESSED = '\x04'
+
     def __init__(self, x, y):
         self.x = Field(x)
         self.y = Field(y)
+
+    @classmethod
+    def decode(cls, data, in_hex=True):
+        if in_hex:
+            data = data.decode('hex')
+
+        sz = len(data) - 1
+        hsz = sz / 2
+        code, data_x, data_y = data[0], data[1:hsz+1], data[hsz+1:]
+
+        if code[0] == cls.FORMAT_UNCOMPRESSED:
+            point_x = int(data_x.encode('hex'), 16)
+            point_y =  int(data_y.encode('hex'), 16)
+
+            return cls(point_x, point_y)
+
+        raise ValueError("Only uncompressed points supported")
 
     def add(self, point_1):
         a = ldata.curve.field_a
@@ -129,6 +151,9 @@ class Point(object):
         return point_2
 
     __add__ = add
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
 
     def negate(self):
         ret = Point(0, 0)
