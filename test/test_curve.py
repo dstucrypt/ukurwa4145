@@ -37,7 +37,7 @@ def test_priv_pub():
         PRIV = 0x2A45EAFE4CD469F811737780C57253360FBCC58E134C9A1FDCD10B0E4529A143
 
         priv = Priv(PRIV)
-        pub = domain.base * priv.param_d
+        pub = priv.pub(domain=domain)
         assert pub.x.v == PUB_X
         assert pub.y.v == PUB_Y
 

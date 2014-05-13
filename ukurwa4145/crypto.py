@@ -25,6 +25,9 @@ class Priv(object):
     def __init__(self, d):
         self.param_d = d
 
+    def pub(self, domain=None):
+        return (domain.base * self.param_d).negate()
+
     def _help_sign(self, value, rand_e, domain):
         eG = domain.base * rand_e
 

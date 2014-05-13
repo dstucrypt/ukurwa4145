@@ -158,7 +158,7 @@ class Point(object):
     def negate(self):
         ret = Point(0, 0)
         ret.x.v = self.x.v
-        ret.y.v = self.y.v + self.x.v
+        ret.y.v = Field.add(self.y.v, self.x.v)
         return ret
 
     def mul(self, param_n):
