@@ -1,5 +1,6 @@
 import re
-from ukurwa4145 import curve, Point, Field, Priv, Pubkey
+from ukurwa4145 import curve, Point, Priv, Pubkey, on_curve
+import random
 
 PUB_KEY = """
     04:00:af:f3:ee:09:cb:42:92:84:98:58:49:e2:0d:
@@ -12,8 +13,16 @@ PUB_KEY = """
 PUB_X = 0x00AFF3EE09CB429284985849E20DE5742E194AA631490F62BA88702505629A6589
 PUB_Y = 0x01B345BC134F27DA251EDFAE97B3F306B4E8B8CB9CF86D8651E4FB301EF8E1239C
 
+@on_curve('DSTU_257')
+def test_on_curve(domain):
+    point_Q = Point(PUB_X, PUB_Y)
+    assert point_Q in domain.curve
 
-def test_sign():
+    point_INV = Point(1, 1)
+    assert point_INV not in domain.curve
+
+
+def test_hsign():
     PRIV = 0x2A45EAFE4CD469F811737780C57253360FBCC58E134C9A1FDCD10B0E4529A143
     HASH = 0x6845214B63288A832A772E1FE6CB6C7D3528569E29A8B3584370FDC65F474242
     RAND_E = 0x7A32849E569C8888F25DE6F69A839D75057383F473ACF559ABD3C5D683294CEB
@@ -26,10 +35,32 @@ def test_sign():
         s, r = priv._help_sign(HASH, rand_e=RAND_E, domain=domain)
         assert SIG == (s, r)
 
-        pubQ = Point(PUB_X, PUB_Y)
-        pub = Pubkey(pubQ)
+        pub = priv.pub(domain)
         ok = pub._help_check(HASH, s, r, domain=domain)
         assert ok
+
+
+def test_sign():
+    with curve('DSTU_257') as domain:
+        hv = random.randint(1, 2**32)
+        hv1 = random.randint(1, 2**32)
+
+        priv, pub = Priv.generate(domain)
+        s, r = priv.sign(value_hash=hv, domain=domain)
+
+        ok = pub._help_check(hv, s, r, domain=domain)
+        assert ok
+
+        ok = pub._help_check(hv1, s, r, domain=domain)
+        assert not ok
+
+        ok = pub._help_check(hv, r, s, domain=domain)
+        assert not ok
+
+        ok = pub._help_check(hv, s, hv1, domain=domain)
+        assert not ok
+
+
 
 
 def test_priv_pub():
@@ -38,8 +69,8 @@ def test_priv_pub():
 
         priv = Priv(PRIV)
         pub = priv.pub(domain=domain)
-        assert pub.x.v == PUB_X
-        assert pub.y.v == PUB_Y
+        assert pub.point.x.v == PUB_X
+        assert pub.point.y.v == PUB_Y
 
 
 def test_pub_key():
@@ -55,6 +86,21 @@ def test_pub_key():
 def test_verify():
     with curve('DSTU_257') as domain:
         help_compute(domain)
+
+def test_generate():
+    with curve('DSTU_257') as cd:
+        priv, pub = Priv.generate(cd)
+        assert pub.point in cd.curve
+        assert priv.pub(cd) == pub
+
+
+@on_curve('DSTU_257')
+def test_non_eq(domain):
+    pointQ = Point(PUB_X, PUB_Y)
+    pointB = Point(PUB_X, PUB_X)
+
+    assert pointQ != pointB
+
 
 def help_compute(domain):
 

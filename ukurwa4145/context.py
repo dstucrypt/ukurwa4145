@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 import threading
+from functools import wraps
 
 ldata = threading.local()
-
 
 @contextmanager
 def curve(name):
@@ -15,11 +15,30 @@ def curve(name):
     del ldata.modulus
 
 
+def on_curve(name):
+    def on_curve(f):
+        @wraps(f)
+        def on_curve(*args, **kwargs):
+            with curve(name) as cd:
+                f(cd)
+        return on_curve
+    return on_curve
+
 class Curve(object):
     def __init__(self, field_a, field_b):
         self.field_a = field_a
         self.field_b = field_b
 
+    def __contains__(self, point):
+        lh = Field.add(point.x.v, self.field_a)
+        lh = Field.mul(lh, point.x.v)
+        lh = Field.add(lh, point.y.v)
+        lh = Field.mul(lh, point.x.v)
+        lh = Field.add(lh, self.field_b)
+        y2 = Field.mul(point.y.v, point.y.v)
+        lh = Field.add(lh, y2)
+
+        return lh == 0
 
 class Domain(object):
     def __init__(self, param_m, nom_k, curve, order, base=None):

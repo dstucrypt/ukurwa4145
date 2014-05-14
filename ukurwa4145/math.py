@@ -6,6 +6,9 @@ bitl = long.bit_length
 
 class Field(object):
     def __init__(self, v):
+        if isinstance(v, int):
+            v = long(v)
+
         self.v = self.mod(v)
 
     @classmethod
@@ -28,6 +31,7 @@ class Field(object):
 
     @classmethod
     def truncate(cls, val):
+        val = long(val)
         domain = ldata.curve_domain
         bitl_o = bitl(domain.order)
         xbit = bitl(val)
@@ -166,9 +170,10 @@ class Point(object):
             raise Point(0, 0)
 
         if param_n < 0:
-            param_n = -param_n
+            param_n = long(-param_n)
             point = self.negate()
         else:
+            param_n = long(param_n)
             point = self
 
         point_s = Point(0, 0)
@@ -183,6 +188,8 @@ class Point(object):
 
     def is_zero(self):
         return (self.x.v == 0) and (self.y.v == 0)
+
+    infinity = property(is_zero)
 
     def __repr__(self):
         return '<Point X:{:x} Y:{:x}>'.format(self.x.v, self.y.v)
