@@ -4,6 +4,7 @@ from functools import wraps
 
 ldata = threading.local()
 
+
 @contextmanager
 def curve(name):
     ldata.curve_domain = StandardDomain.resolve(name)()
@@ -24,6 +25,7 @@ def on_curve(name):
         return on_curve
     return on_curve
 
+
 class Curve(object):
     def __init__(self, field_a, field_b):
         self.field_a = field_a
@@ -40,6 +42,7 @@ class Curve(object):
 
         return lh == 0
 
+
 class Domain(object):
     def __init__(self, param_m, nom_k, curve, order, base=None):
         self.param_m = param_m
@@ -47,7 +50,6 @@ class Domain(object):
         self.curve = curve
         self.order = order
         self._base = base
-        print param_m, nom_k
         self.modulus = Field.comp_modulus(param_m, *self.nom_k)
 
     def __exit__(self, exc_type, exc_value, tracebac):
