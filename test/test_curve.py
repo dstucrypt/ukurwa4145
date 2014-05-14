@@ -35,8 +35,8 @@ def test_hsign():
         s, r = priv._help_sign(HASH, rand_e=RAND_E, domain=domain)
         assert SIG == (s, r)
 
-        pub = priv.pub(domain)
-        ok = pub._help_check(HASH, s, r, domain=domain)
+        pub = priv.pub()
+        ok = pub._help_verify(HASH, s, r, domain=domain)
         assert ok
 
 
@@ -45,19 +45,19 @@ def test_sign():
         hv = random.randint(1, 2**32)
         hv1 = random.randint(1, 2**32)
 
-        priv, pub = Priv.generate(domain)
-        s, r = priv.sign(value_hash=hv, domain=domain)
+        priv, pub = Priv.generate()
+        s, r = priv.sign(value_hash=hv)
 
-        ok = pub._help_check(hv, s, r, domain=domain)
+        ok = pub._help_verify(hv, s, r, domain=domain)
         assert ok
 
-        ok = pub._help_check(hv1, s, r, domain=domain)
+        ok = pub._help_verify(hv1, s, r, domain=domain)
         assert not ok
 
-        ok = pub._help_check(hv, r, s, domain=domain)
+        ok = pub._help_verify(hv, r, s, domain=domain)
         assert not ok
 
-        ok = pub._help_check(hv, s, hv1, domain=domain)
+        ok = pub._help_verify(hv, s, hv1, domain=domain)
         assert not ok
 
 
@@ -68,7 +68,7 @@ def test_priv_pub():
         PRIV = 0x2A45EAFE4CD469F811737780C57253360FBCC58E134C9A1FDCD10B0E4529A143
 
         priv = Priv(PRIV)
-        pub = priv.pub(domain=domain)
+        pub = priv.pub()
         assert pub.point.x.v == PUB_X
         assert pub.point.y.v == PUB_Y
 
@@ -89,9 +89,9 @@ def test_verify():
 
 def test_generate():
     with curve('DSTU_257') as cd:
-        priv, pub = Priv.generate(cd)
+        priv, pub = Priv.generate()
         assert pub.point in cd.curve
-        assert priv.pub(cd) == pub
+        assert priv.pub() == pub
 
 
 @on_curve('DSTU_257')
@@ -114,5 +114,5 @@ def help_compute(domain):
     hash_val =  0x71C910BAC9C494E0F2A6DBDD369C542AAF95E0CF842155C2F76595117EB0F26D
 
 
-    ok = pub._help_check(hash_val, s, r, domain=domain)
+    ok = pub._help_verify(hash_val, s, r, domain=domain)
     assert ok

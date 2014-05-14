@@ -1,4 +1,6 @@
 from .math import Field
+from . context import ldata
+
 import random
 
 
@@ -6,11 +8,33 @@ class ParamError(TypeError):
     pass
 
 
+class SignatureError(Exception):
+    pass
+
+
 class Pubkey(object):
     def __init__(self, point):
         self.point = point
 
-    def _help_check(self, value, s, r, domain=None):
+    def verify(self, value=None, value_hash=None, s=None, r=None, signature=None):
+        if value is not None:
+            raise ValueError("Hashing not supported yet")
+
+        if signature is not None:
+            raise ValueError("Signature unpack is not supported yet")
+
+        domain = ldata.curve_domain
+        try:
+            truncated = Field.truncate(value_hash)
+            ok = self._help_verify(truncated, s, r, domain)
+            if not ok:
+                raise SignatureError("Signature does not match")
+
+            return ok
+        except ValueError:
+            raise SignatureError("Signature invalid")
+
+    def _help_verify(self, value, s, r, domain=None):
 
         if s == 0 or r == 0:
             raise ValueError("Signature cannot be zero")
@@ -25,8 +49,7 @@ class Pubkey(object):
         if pointR.infinity:
             raise ValueError("Invalid signature. R point is infinity")
 
-        value = Field.truncate(value)
-        r1 = Field.mul(value, pointR.x.v)
+        r1 = Field.mul(long(value), pointR.x.v)
         r1 = Field.truncate(r1)
         return r1 == r
 
@@ -50,12 +73,14 @@ class Priv(object):
         self.param_d = d
 
     @classmethod
-    def generate(cls, domain=None):
+    def generate(cls):
+        domain = ldata.curve_domain
+
         rand_d = random.randint(1, domain.order)
 
         while True:
             priv = cls(rand_d)
-            pub = priv.pub(domain)
+            pub = priv.pub()
 
             try:
                 pub.validate(domain)
@@ -64,11 +89,15 @@ class Priv(object):
 
             return priv, pub
 
-    def pub(self, domain=None):
+    def pub(self):
+        domain = ldata.curve_domain
+
         point_q = (domain.base * self.param_d).negate()
         return Pubkey(point_q)
 
-    def sign(self, value=None, value_hash=None, domain=None):
+    def sign(self, value=None, value_hash=None):
+        domain = ldata.curve_domain
+
         if not value and not value_hash:
             raise ValueError("Nothing to sign")
 
