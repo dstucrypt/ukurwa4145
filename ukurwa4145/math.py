@@ -30,10 +30,10 @@ class Field(object):
         return rv
 
     @classmethod
-    def truncate(cls, val):
+    def truncate(cls, val, to_size=None):
         val = long(val)
         domain = ldata.curve_domain
-        bitl_o = bitl(domain.order)
+        bitl_o = to_size if to_size else bitl(domain.order)
         xbit = bitl(val)
         while bitl_o <= xbit:
             val = val ^ (1<<(xbit - 1))

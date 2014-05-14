@@ -60,7 +60,8 @@ class Priv(object):
             raise ValueError("Hashing is not supported yet")
 
         rand_e = random.randint(1, domain.order)
-        return self._help_sign(Field.truncate(value_hash), rand_e, domain)
+        truncated = Field.truncate(value_hash, domain.param_m)
+        return self._help_sign(truncated, rand_e, domain)
 
     def pub(self, domain=None):
         point_q = (domain.base * self.param_d).negate()
@@ -69,6 +70,7 @@ class Priv(object):
     def _help_sign(self, value, rand_e, domain):
         eG = domain.base * rand_e
 
+        value = Field.truncate(value, domain.param_m)
         r = Field.mul(value, eG.x.v)
         r = Field.truncate(r)
 
