@@ -1,3 +1,4 @@
+import random
 from . context import ldata
 
 
@@ -76,7 +77,53 @@ class Field(object):
         return b
 
     @classmethod
+    def trace(cls, val):
+        modulus = ldata.modulus
+
+        rv = long(val)
+        bitm_l = bitl(modulus)
+        for idx in range(1, bitm_l-1):
+            rv = long(rv)
+            rv = cls.mul(rv, rv)
+            rv = rv ^ val
+
+        return rv
+
+    @classmethod
+    def squad(cls, val):
+        modulus = ldata.modulus
+
+        if modulus & 1:
+            ret = cls.squad_odd(val)
+        else:
+            ret = cls.squad_even(val)
+
+        return cls.mod(ret)
+
+    @classmethod
+    def squad_odd(cls, val):
+        val_a = cls.mod(val)
+        val_z = val_a
+
+        for idx in range(1, ((cls.p0-1)/2) + 1):
+            val_z = cls.mul(val_z, val_z)
+            val_z = cls.mul(val_z, val_z)
+            val_z = cls.add(val_z, val_a)
+
+        val_w = cls.mul(val_z, val_z)
+        val_w = cls.add(val_z, val_w)
+
+        assert val_w == val_a
+
+        return val_z
+
+    @classmethod
+    def squad_eve(cls, val):
+        raise ValueError("Not implemented")
+
+    @classmethod
     def comp_modulus(cls, k3, k2, k1):
+        cls.p0 = k3
         modulus = 0
         modulus |= 1<<k3
         modulus |= 1<<k2
@@ -94,6 +141,46 @@ class Point(object):
     def __init__(self, x, y):
         self.x = Field(x)
         self.y = Field(y)
+
+    @classmethod
+    def expand(cls, val):
+
+        pb = ldata.curve.field_b
+        pa = ldata.curve.field_a
+
+        if val == 0:
+            return val, Field.mul(pb, pb)
+
+        valmask = (1<<ldata.curve_domain.param_m) - 1
+        k = val & 1
+        val = (valmask-1) & val
+
+        trace = Field.trace(val)
+
+        if (trace and pa == 0) or (not trace and pa == 1):
+            val = val | 1
+
+        x2 = Field.mul(val, val)
+
+        y = Field.mul(x2, val)
+
+        if pa == 1:
+            y = Field.add(y, x2)
+
+        y = Field.add(y, pb)
+        x2 = Field.inv(x2)
+
+        y = Field.mul(y, x2)
+
+        y = Field.squad(y)
+
+        trace_y = Field.trace(y)
+
+        if (k and not trace_y) or (not k and trace_y):
+            y += 1
+
+        y = Field.mul(y, val)
+        return val, y
 
     @classmethod
     def decode(cls, data, in_hex=True):

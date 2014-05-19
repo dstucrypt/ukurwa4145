@@ -1,5 +1,5 @@
 import re
-from ukurwa4145 import curve, Point, Priv, Pubkey, on_curve
+from ukurwa4145 import curve, Point, Priv, Pubkey, on_curve, Field
 import random
 
 PUB_KEY = """
@@ -21,6 +21,20 @@ def test_on_curve(domain):
     point_INV = Point(1, 1)
     assert point_INV not in domain.curve
 
+@on_curve('DSTU_257')
+def test_trace(domain):
+    trace = Field.trace(0x2A29EF207D0E9B6C55CD260B306C7E007AC491CA1B10C62334A9E8DCD8D20FB6)
+    assert trace == 1
+
+
+@on_curve('DSTU_257')
+def test_expand(domain):
+    x, y  = Point.expand(0)
+    assert x == 0
+
+    x, y = Point.expand(0x2A29EF207D0E9B6C55CD260B306C7E007AC491CA1B10C62334A9E8DCD8D20FB6)
+    assert x == 0x2A29EF207D0E9B6C55CD260B306C7E007AC491CA1B10C62334A9E8DCD8D20FB7
+    assert y == 0x010686D41FF744D4449FCCF6D8EEA03102E6812C93A9D60B978B702CF156D814EF
 
 def test_hsign():
     PRIV = 0x2A45EAFE4CD469F811737780C57253360FBCC58E134C9A1FDCD10B0E4529A143
