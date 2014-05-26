@@ -199,6 +199,18 @@ class Point(object):
 
         raise ValueError("Only uncompressed points supported")
 
+    def compress(self):
+        if self.x.v == 0:
+            raise ValueError("Can't compress infinity")
+
+        x_inv = Field.inv(self.x.v)
+        y = Field.mul(x_inv, self.y.v)
+        y_trace = Field.trace(y)
+        if y_trace:
+            return self.x.v | 1
+
+        return self.x.v ^ (self.x.v & 1)
+
     def add(self, point_1):
         a = ldata.curve.field_a
 
