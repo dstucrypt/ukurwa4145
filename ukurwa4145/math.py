@@ -6,11 +6,11 @@ bitl = long.bit_length
 
 
 class Field(object):
-    def __init__(self, v):
+    def __init__(self, v, raw=False):
         if isinstance(v, int):
             v = long(v)
 
-        self.v = self.mod(v)
+        self.v = self.truncate(v) if raw else self.mod(v)
 
     @classmethod
     def mod(self, val):
@@ -122,12 +122,11 @@ class Field(object):
         raise ValueError("Not implemented")
 
     @classmethod
-    def comp_modulus(cls, k3, k2, k1):
-        cls.p0 = k3
+    def comp_modulus(cls, *kbits):
+        cls.p0 = max(kbits)
         modulus = 0
-        modulus |= 1<<k3
-        modulus |= 1<<k2
-        modulus |= 1<<k1
+        for kbit in kbits:
+            modulus |= 1<<kbit
 
         return modulus
 
@@ -138,9 +137,9 @@ class Field(object):
 class Point(object):
     FORMAT_UNCOMPRESSED = '\x04'
 
-    def __init__(self, x, y):
-        self.x = Field(x)
-        self.y = Field(y)
+    def __init__(self, x, y, raw=False):
+        self.x = Field(x, raw=raw)
+        self.y = Field(y, raw=raw)
 
     @classmethod
     def expand(cls, val):
