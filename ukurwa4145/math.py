@@ -176,7 +176,7 @@ class Point(object):
         trace_y = Field.trace(y)
 
         if (k and not trace_y) or (not k and trace_y):
-            y += 1
+            y = y ^ 1
 
         y = Field.mul(y, val)
         return val, y
