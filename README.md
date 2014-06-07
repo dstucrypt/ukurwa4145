@@ -24,4 +24,9 @@ with curve('DSTU_257') as cd:
     #    ukurwa4145.crypto.SignatureError: Signature does not match
 ```
 
-DSTU 4145 spec: http://info-stand.com/downloads/dstu/dstu-4145-2002/dstu-4145-2002.pdf
+Links
+-----
+
+* DSTU 4145 spec: http://info-stand.com/downloads/dstu/dstu-4145-2002/dstu-4145-2002.pdf
+* Sister library: https://github.com/muromec/jkurwa
+* Gost block ciphers compiled to js: https://github.com/muromec/em-gost
