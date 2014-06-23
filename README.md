@@ -5,6 +5,8 @@ Partial, broken and unusable implementation of DSTU 4145-200.
 
 ![We](https://raw.githubusercontent.com/muromec/ukurwa4145/master/kdpv.jpg)
 
+![travis](https://api.travis-ci.org/dstucrypt/ukurwa4145?branch=master)
+
 Usage
 -----
 
