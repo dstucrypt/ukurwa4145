@@ -274,13 +274,17 @@ class Point(object):
             param_n = long(param_n)
             point = self
 
-        point_s = Point(0, 0)
+        point_r0 = Point(0, 0)
+        point_r1 = point
         for j in xrange(bitl(param_n) - 1, -1, -1):
-            point_s = point_s + point_s
             if param_n & (1<<j):
-                point_s = point_s + point
+                point_r0 = point_r0 + point_r1
+                point_r1 = point_r1 + point_r1
+            else:
+                point_r1 = point_r0 + point_r1
+                point_r0 = point_r0 + point_r0
 
-        return point_s
+        return point_r0
 
     __mul__ = mul
 
